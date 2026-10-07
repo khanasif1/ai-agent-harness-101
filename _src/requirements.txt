@@ -1,0 +1,7 @@
+# Keep runtime dependencies in sync with pyproject.toml.
+azure-identity>=1.25.3
+mcp>=2.2.0
+openai>=3.10.0
+pydantic>=2.13.5
+# Provides uvx, which installs and runs the configured MCP servers separately.
+uv
