@@ -20,7 +20,7 @@ separate installation.
 ## v0-v4: Microsoft Foundry with Entra authentication
 
 [v0.py](_src/v0.py), [v1.py](_src/v1.py), [v2.py](_src/v2.py),
-[v3.py](_src/v3.py), and [v4.py](_src/v4.py) call the `gpt-6-astra` deployment
+[v3_MCP.py](_src/v3_MCP.py), and [v4.py](_src/v4.py) call the `gpt-6-astra` deployment
 using the Responses API at
 `https://use-ai-foundry-demo.services.ai.azure.com/openai/v1/responses`.
 They use `DefaultAzureCredential` with an automatically refreshed Microsoft Entra
@@ -39,7 +39,7 @@ Replace `v0.py` with the example you want to run:
 
 - [v1.py](_src/v1.py): one round of local tool calls.
 - [v2.py](_src/v2.py): repeated local tool calls until the model answers.
-- [v3.py](_src/v3.py): an async agent loop with local and MCP tools. Token
+- [v3_MCP.py](_src/v3_MCP.py): an async agent loop with local and MCP tools. Token
   acquisition runs in a worker thread so it does not block the event loop.
 - [v4.py](_src/v4.py): local tools, persistent memory, and conversation history.
 
@@ -57,10 +57,27 @@ ollama pull qwen3.5:4b
 python harness.py
 ```
 
-[v3.py](_src/v3.py) and [harness.py](_src/harness.py) launch `mcp-server-time`
+## MCP package downloads
+
+[v3_MCP.py](_src/v3_MCP.py) and [harness.py](_src/harness.py) launch `mcp-server-time`
 and `mcp-server-fetch` through `uvx`, which is provided by the `uv` dependency.
 `uvx` installs those server packages in separate environments on demand, so the
 first run needs internet access.
+
+If your network requires a package mirror, [v3_MCP.py](_src/v3_MCP.py) supports
+`UV_DEFAULT_INDEX`. From `_src`, set it in the same PowerShell session before
+starting the example, replacing the URL with your approved package index:
+
+```powershell
+$env:UV_DEFAULT_INDEX = "https://your-package-index.example/simple/"
+python .\v3_MCP.py
+```
+
+The example passes the index explicitly to each `uvx` command because the MCP
+stdio launcher does not inherit `UV_DEFAULT_INDEX` automatically. Leaving it
+unset or empty preserves the default `uvx` index behavior. If initialization
+reports `Connection closed`, check the server's stderr above the traceback for
+package download or startup errors.
 
 ## Offline tests
 

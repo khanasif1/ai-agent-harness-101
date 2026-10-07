@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 import threading
 import time
 import unittest
@@ -103,7 +104,8 @@ class Example:
                 **kwargs, http_client=http_client(transport=transport), max_retries=0
             )
 
-        spec = importlib.util.spec_from_file_location(name, ROOT / f"{name}.py")
+        filename = "v3_MCP.py" if name == "v3" else f"{name}.py"
+        spec = importlib.util.spec_from_file_location(name, ROOT / filename)
         if spec is None or spec.loader is None:
             raise ImportError(f"Cannot load {name}")
         self.module = importlib.util.module_from_spec(spec)
@@ -283,6 +285,22 @@ class FoundryExampleTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(json.JSONDecodeError):
             example.module.run_agent("Read my notes")
         self.assertEqual(len(example.requests), 1)
+
+    def test_v3_mcp_server_launch_arguments(self):
+        for index in (None, "", "https://packages.example.test/simple/"):
+            with self.subTest(index=index), patch.dict(os.environ):
+                os.environ.pop("UV_DEFAULT_INDEX", None)
+                if index is not None:
+                    os.environ["UV_DEFAULT_INDEX"] = index
+                example = self.example("v3")
+                for name in ("time", "fetch"):
+                    with self.subTest(server=name):
+                        params = example.module.MCP_SERVERS[name]
+                        expected_args = [f"mcp-server-{name}"]
+                        if index:
+                            expected_args = ["--default-index", index, *expected_args]
+                        self.assertEqual(params.command, "uvx")
+                        self.assertEqual(params.args, expected_args)
 
     async def test_v3_direct_answers_and_nonblocking_token_refresh(self):
         example = self.example("v3", reply(message("Hello")), reply(message("Hi")))

@@ -4,6 +4,7 @@ sys.stdout.reconfigure(encoding="utf-8")  # so emoji don't crash the Windows con
 
 import asyncio
 import json
+import os
 from contextlib import AsyncExitStack
 from pathlib import Path
 
@@ -12,6 +13,23 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from openai import AsyncOpenAI
 from openai.types.responses import ResponseInputParam, ToolParam
+
+UV_DEFAULT_INDEX = os.getenv("UV_DEFAULT_INDEX")
+
+
+def uvx_server(package: str) -> StdioServerParameters:
+    args = [package]
+    if UV_DEFAULT_INDEX:
+        args = ["--default-index", UV_DEFAULT_INDEX, package]
+
+    return StdioServerParameters(command="uvx", args=args)
+
+
+MCP_SERVERS = {
+    "time": uvx_server("mcp-server-time"),
+    "fetch": uvx_server("mcp-server-fetch"),
+}
+
 
 credential = DefaultAzureCredential()
 sync_token_provider = get_bearer_token_provider(
@@ -31,12 +49,6 @@ client = AsyncOpenAI(
 MODEL = "gpt-6-astra"
 
 WORKSPACE = Path(__file__).parent / "workspace"
-
-# Each server is just a command to launch. Same format Claude Code uses.
-MCP_SERVERS = {
-    "time": StdioServerParameters(command="uvx", args=["mcp-server-time"]),
-    "fetch": StdioServerParameters(command="uvx", args=["mcp-server-fetch"]),
-}
 
 
 # --- our own local tools, unchanged from v2 ---------------------------------
