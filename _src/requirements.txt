@@ -1,4 +1,5 @@
 # Keep runtime dependencies in sync with pyproject.toml.
+anthropic>=1.9.0
 azure-identity>=1.25.3
 mcp>=2.2.0
 openai>=3.10.0
